@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concepteur d'escaliers 3D</title>
+    <img src="https://raw.githubusercontent.com/Gitie2024/mes-images/refs/heads/main/EScaliers%20de%20Paris.jpg" width="300" height="100" alt="image"/>
+    <!-- Tailwind CSS pour un design moderne, contrasté et responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PyScript Core -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <style>
+        .transition-all-custom {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="h-full font-sans antialiased text-blue-950">
+
+    <div class="min-h-screen flex flex-col justify-between">
+        <!-- En-t&ecirc;te -->
+        <header class="bg-white border-b border-blue-100 py-6 px-4 sm:px-6 lg:px-8 shadow-xs">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-blue-900 tracking-tight flex items-center gap-2">
+                        📐 Concepteur d'escaliers 3D
+                    </h1>
+                    <p class="text-sm text-blue-600 mt-1">Conception param&eacute;trique en temps r&eacute;el, calcul de conformit&eacute; ergonomique &amp; exports vectoriels</p>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-blue-500 bg-blue-50/50 border border-blue-100 px-3 py-1.5 rounded-md self-start md:self-auto">
+                    <span>Moteur : Pyodide (Python WASM)</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenu Principal -->
+        <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+            
+            <!-- Message d'erreur dynamique -->
+            <div id="error-banner" class="hidden mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg text-sm flex items-center gap-3">
+                <!-- Rempli par le script en cas d'erreur -->
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Colonne Gauche : Param&egrave;tres de saisie -->
+                <section class="lg:col-span-5 space-y-6">
+                    <div class="bg-white rounded-xl border border-blue-100 shadow-xs p-6 space-y-6">
+                        <h2 class="text-lg font-semibold text-blue-900 border-b border-blue-50 pb-3">Configuration G&eacute;n&eacute;rale</h2>
+                        
+                        <!-- Formulaire -->
+                        <div class="space-y-4">
+                            <!-- Type d'escalier -->
+                            <div>
+                                <label for="stair_type" class="block text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">Type de structure</label>
+                                <select id="stair_type" class="w-full bg-blue-50/30 border border-blue-200 rounded-lg px-3 py-2.5 text-sm text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all">
+                                    <option value="droit" selected>Escalier Droit</option>
+                                    <option value="tournant_gauche">Escalier Quart-Tournant (L - Gauche)</option>
+                                    <option value="tournant_droite">Escalier Quart-Tournant (L - Droite)</option>
+                                    <option value="colimacon">Escalier en Colima&ccedil;on (H&eacute;lico&iuml;dal)</option>
+                                </select>
+                            </div>
+
+                            <!-- Dimensions des marches -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="num_steps" class="block text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">Nb de marches</label>
+                                    <input type="number" id="num_steps" value="15" min="1" max="35" class="w-full bg-blue-50/30 border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all">
+                                </div>
+                                <div>
+                                    <label_for="step_height" class="block text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">Haut. marche (cm)</label>
+                                    <input type="number" id="step_height" value="17.5" step="0.1" class="w-full bg-blue-50/30 border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all">
+                                </div>
+                            </div>
+
+                            <!-- Giron (Profondeur de marche) -->
+                            <div>
+                                <label for="step_tread" class="block text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">Giron / Profondeur (cm)</label>
+                                <input type="number" id="step_tread" value="28.0" step="0.1" class="w-full bg-blue-50/30 border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all">
+                            </div>
+
+                            <h2 class="text-lg font-semibold text-blue-900 border-b border-blue-50 pb-3 pt-2">Profil de largeur (Vues profil&eacute;es)</h2>
+
+                            <!-- Largeur premi&egrave;re et derni&egrave;re marche -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="width_start" class="block text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">1&egrave;re marche (cm)</label>
+                                    <input type="number" id="width_start" value="90.0" step="1" class="w-full bg-slate-50 border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all">
+                                </div>
+                                <div>
+                                    <label for="width_end" class="block text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">Derni&egrave;re (cm)</label>
+                                    <input type="number" id="width_end" value="90.0" step="1" class="w-full bg-slate-50 border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bouton d'action -->
+                        <button py-click="update_stairs" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold text-sm py-3.5 px-4 rounded-lg shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
+                            <span>🔨 G&eacute;n&eacute;rer et Analyser</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Colonne Droite : Rendu 3D et Analyse ergonomique -->
+                <section class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Carte Rendu 3D -->
+                    <div class="bg-white rounded-xl border border-blue-100 shadow-xs p-4 sm:p-6 flex flex-col items-center justify-center min-h-[420px] relative overflow-hidden">
+                        <!-- Indicateur de chargement -->
+                        <div id="spinner" class="absolute inset-0 bg-white/80 backdrop-blur-xs flex flex-col items-center justify-center gap-3 z-10 transition-all-custom hidden">
+                            <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-700 border-t-transparent"></div>
+                            <span class="text-sm font-semibold text-blue-900">Calcul g&eacute;om&eacute;trique en cours...</span>
+                        </div>
+
+                        <!-- Image de la mod&eacute;lisation -->
+                        <img id="staircase_img" class="max-w-full h-auto object-contain transition-all-custom" alt="Visualisation 3D de l'escalier">
+                        
+                        <!-- Bouton de t&eacute;l&eacute;chargement SVG -->
+                        <a id="download_btn_svg" class="hidden mt-4 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 font-semibold text-xs py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer">
+                            <span>📥 T&eacute;l&eacute;charger le sch&eacute;ma vectoriel (SVG)</span>
+                        </a>
+                    </div>
+
+                    <!-- Carte Diagnostics Techniques -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <!-- Diagnostic Blondel -->
+                        <div class="bg-white rounded-xl border border-blue-100 shadow-xs p-5 space-y-3">
+                            <span class="text-xs font-bold text-blue-700 uppercase tracking-wider">Ergonomie de foul&eacute;e (Blondel)</span>
+                            <div class="flex items-baseline gap-2">
+                                <span id="diag_blondel_val" class="text-2xl font-extrabold text-blue-950">-- cm</span>
+                                <span class="text-xs text-blue-500">(Ref: 2H + G)</span>
+                            </div>
+                            <div id="diag_blondel_badge" class="inline-flex">--</div>
+                            <p class="text-xs text-blue-600/80 mt-1 font-medium">La formule de Blondel recommand&eacute;e pour l'habitation se situe de pr&eacute;f&eacute;rence entre 60 et 64 cm.</p>
+                        </div>
+
+                        <!-- Diagnostic Angle de rampe -->
+                        <div class="bg-white rounded-xl border border-blue-100 shadow-xs p-5 space-y-3">
+                            <span class="text-xs font-bold text-blue-700 uppercase tracking-wider">Pente &amp; Inclinaison</span>
+                            <div class="flex items-baseline gap-2">
+                                <span id="diag_angle_val" class="text-2xl font-extrabold text-blue-950">--&deg;</span>
+                            </div>
+                            <div id="diag_angle_badge" class="inline-flex">--</div>
+                            <p class="text-xs text-blue-600/80 mt-1 font-medium">L'angle id&eacute;al pour un escalier int&eacute;rieur classique d'habitation se situe entre 28&deg; et 37&deg;.</p>
+                        </div>
+
+                    </div>
+
+                    <!-- Récapitulatif d'encombrement -->
+                    <div class="bg-white rounded-xl border border-blue-100 shadow-xs p-5 space-y-4">
+                        <h3 class="text-sm font-semibold text-blue-900 uppercase tracking-wider border-b border-blue-50 pb-2">Encombrement spatial de la structure</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div class="flex justify-between py-1 border-b border-blue-50">
+                                <span class="text-blue-600 font-medium">Hauteur franchie :</span>
+                                <span id="tech_height" class="font-bold text-blue-950">-- m</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-blue-50">
+                                <span class="text-blue-600 font-medium">Emprise au sol requise :</span>
+                                <span id="tech_footprint" class="font-bold text-blue-950 text-right">-- m</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+            </div>
+        </main>
+
+        <!-- Pied de page -->
+        <footer class="bg-blue-50 border-t border-blue-100 py-6 text-center text-xs text-blue-600/80 font-medium">
+            <div class="max-w-7xl mx-auto px-4">
+                D&eacute;velopp&eacute; avec PyScript (Python sous WebAssembly), Matplotlib &amp; Numpy. Rendu physique d'apr&egrave;s le syst&egrave;me de coordonn&eacute;es Euclidiennes tridimensionnelles.
+            </div>
+        </footer>
+    </div>
+
+    <!-- Script de configuration PyScript -->
+    <script type="py" config='{"packages": ["matplotlib", "numpy"]}'>
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # Desactive l'affichage interactif lourd hors-navigateur
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import io
+import base64
+import asyncio
+from js import document, window, Blob
+
+def generate_straight_stairs(N, H, D, W_start, W_end):
+    """Genere les coordonnees 3D pour un escalier droit avec interpolation des largeurs."""
+    steps = []
+    for i in range(N):
+        w_front = W_start + (W_end - W_start) * (i / N)
+        w_back = W_start + (W_end - W_start) * ((i + 1) / N)
+        
+        x0, x1 = i * D, (i + 1) * D
+        z1 = (i + 1) * H
+        
+        v = np.array([
+            [x0, -w_front/2, 0],   # Bas gauche avant
+            [x0, w_front/2, 0],    # Bas droite avant
+            [x1, w_back/2, 0],     # Bas droite arriere
+            [x1, -w_back/2, 0],    # Bas gauche arriere
+            [x0, -w_front/2, z1],  # Haut gauche avant
+            [x0, w_front/2, z1],   # Haut droite avant
+            [x1, w_back/2, z1],    # Haut droite arriere
+            [x1, -w_back/2, z1]    # Haut gauche arriere
+        ])
+        steps.append(v)
+    return steps
+
+def generate_l_stairs(N, H, D, W_start, W_end, turn_direction="gauche"):
+    """Genere un escalier quart-tournant a gauche ou a droite (L-shape)."""
+    steps = []
+    K = N // 2  # Marche pivot / Palier
+    
+    widths = [W_start + (W_end - W_start) * (i / (N - 1)) if N > 1 else W_start for i in range(N)]
+    
+    # Premiere volee (droite le long de l'axe X)
+    for i in range(K):
+        w_front, w_back = widths[i], widths[i+1]
+        x0, x1 = i * D, (i + 1) * D
+        z1 = (i + 1) * H
+        
+        v = np.array([
+            [x0, -w_front/2, 0],
+            [x0, w_front/2, 0],
+            [x1, w_back/2, 0],
+            [x1, -w_back/2, 0],
+            [x0, -w_front/2, z1],
+            [x0, w_front/2, z1],
+            [x1, w_back/2, z1],
+            [x1, -w_back/2, z1]
+        ])
+        steps.append(v)
+        
+    # Palier de virage (marche K) : solide carre ajuste
+    w_landing = widths[K]
+    x0_l, x1_l = K * D, K * D + w_landing
+    y0_l, y1_l = -w_landing / 2, w_landing / 2
+    z_l = (K + 1) * H
+    
+    landing_v = np.array([
+        [x0_l, y0_l, 0],
+        [x0_l, y1_l, 0],
+        [x1_l, y1_l, 0],
+        [x1_l, y0_l, 0],
+        [x0_l, y0_l, z_l],
+        [x0_l, y1_l, z_l],
+        [x1_l, y1_l, z_l],
+        [x1_l, y0_l, z_l]
+    ])
+    steps.append(landing_v)
+    
+    # Deuxieme volee (Y positif pour la gauche, Y negatif pour la droite)
+    for i in range(K + 1, N):
+        s = i - K
+        w_curr, w_prev = widths[i], widths[i-1]
+        z1 = (i + 1) * H
+        
+        if turn_direction == "gauche":
+            y0 = y1_l + (s - 1) * D
+            y1 = y1_l + s * D
+        else: # droite
+            y0 = y0_l - (s - 1) * D
+            y1 = y0_l - s * D
+        
+        x_outer = x1_l
+        x_inner_prev = x1_l - w_prev
+        x_inner_curr = x1_l - w_curr
+        
+        v = np.array([
+            [x_inner_prev, y0, 0],
+            [x_outer, y0, 0],
+            [x_outer, y1, 0],
+            [x_inner_curr, y1, 0],
+            [x_inner_prev, y0, z1],
+            [x_outer, y0, z1],
+            [x_outer, y1, z1],
+            [x_inner_curr, y1, z1]
+        ])
+        steps.append(v)
+        
+    return steps
+
+def generate_spiral_stairs(N, H, W_start, W_end, r_in=0.08, degrees_per_step=26.0):
+    """Genere les coordonnees 3D pour un escalier en colimacon (helico&iuml;dal)."""
+    steps = []
+    theta_step = np.radians(degrees_per_step)
+    
+    for i in range(N):
+        w = W_start + (W_end - W_start) * (i / (N - 1)) if N > 1 else W_start
+        r_out = r_in + w
+        
+        # Angles avec un leger chevauchement structurel (3 degres) pour la continuite visuelle
+        overlap = np.radians(3.0)
+        a1 = i * theta_step
+        a2 = (i + 1) * theta_step + overlap
+        
+        z0 = i * H
+        z1 = (i + 1) * H
+        
+        v = np.array([
+            [r_in * np.cos(a1), r_in * np.sin(a1), z0],   # 0
+            [r_out * np.cos(a1), r_out * np.sin(a1), z0], # 1
+            [r_out * np.cos(a2), r_out * np.sin(a2), z0], # 2
+            [r_in * np.cos(a2), r_in * np.sin(a2), z0],   # 3
+            [r_in * np.cos(a1), r_in * np.sin(a1), z1],   # 4
+            [r_out * np.cos(a1), r_out * np.sin(a1), z1], # 5
+            [r_out * np.cos(a2), r_out * np.sin(a2), z1], # 6
+            [r_in * np.cos(a2), r_in * np.sin(a2), z1]    # 7
+        ])
+        steps.append(v)
+    return steps
+
+async def update_stairs_async():
+    """Effectue la modelisation lourde, met a jour le DOM et cree l'export vectoriel (SVG)."""
+    error_banner = document.getElementById("error-banner")
+    error_banner.classList.add("hidden")
+    error_banner.innerText = ""
+    
+    spinner = document.getElementById("spinner")
+    spinner.classList.remove("hidden")
+    
+    await asyncio.sleep(0.05)
+    
+    try:
+        stair_type = document.getElementById("stair_type").value
+        num_steps = int(document.getElementById("num_steps").value)
+        step_height = float(document.getElementById("step_height").value) / 100.0  # cm en m
+        step_tread = float(document.getElementById("step_tread").value) / 100.0    # cm en m
+        width_start = float(document.getElementById("width_start").value) / 100.0  # cm en m
+        width_end = float(document.getElementById("width_end").value) / 100.0      # cm en m
+        
+        if num_steps <= 0:
+            raise ValueError("Le nombre de marches doit etre superieur a 0.")
+        if num_steps > 35:
+            raise ValueError("Le nombre maximum de marches est limite a 35.")
+        if step_height <= 0 or step_tread <= 0 or width_start <= 0 or width_end <= 0:
+            raise ValueError("Toutes les dimensions d'une marche doivent etre superieures a zero.")
+            
+        # Selection de la routine geometrique de calcul
+        if stair_type == "droit":
+            steps = generate_straight_stairs(num_steps, step_height, step_tread, width_start, width_end)
+        elif stair_type == "tournant_gauche":
+            steps = generate_l_stairs(num_steps, step_height, step_tread, width_start, width_end, "gauche")
+        elif stair_type == "tournant_droite":
+            steps = generate_l_stairs(num_steps, step_height, step_tread, width_start, width_end, "droite")
+        else:
+            steps = generate_spiral_stairs(num_steps, step_height, width_start, width_end)
+            
+        # Creation de la figure 3D Matplotlib
+        fig = plt.figure(figsize=(9, 7))
+        ax = fig.add_subplot(111, projection='3d')
+        
+        # Epuration stylistique 3D pour un effet d'epure architecturale
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.xaxis.pane.set_edgecolor('white')
+        ax.yaxis.pane.set_edgecolor('white')
+        ax.zaxis.pane.set_edgecolor('white')
+        ax.grid(True, color='#E2E8F0', linestyle='--', linewidth=0.5)
+        
+        # Cartographie des 6 faces d'un polyedre a 8 sommets
+        faces_idx = [
+            [0, 1, 2, 3], # Dessous
+            [4, 5, 6, 7], # Dessus (Giron)
+            [0, 1, 5, 4], # Face avant (Contremarche)
+            [2, 3, 7, 6], # Face arriere
+            [0, 3, 7, 4], # Cote gauche
+            [1, 2, 6, 5]  # Cote droit
+        ]
+        
+        # Trace de chaque marche
+        for v in steps:
+            faces = [[v[idx] for idx in face] for face in faces_idx]
+            poly3d = Poly3DCollection(faces, alpha=0.9, edgecolor='#0284C7', linewidths=0.3)
+            
+            # Palette d'harmonie Bleu / Blanc : Marches bleu roi / structure blanche
+            face_colors = [
+                '#E0F2FE',  # Dessous (bleu ciel tres clair)
+                '#0284C7',  # Dessus (bleu de giron satin)
+                '#F8FAFC',  # Avant (blanc de contremarche)
+                '#E0F2FE',  # Arriere
+                '#F0F9FF',  # Gauche
+                '#F0F9FF'   # Droite
+            ]
+            poly3d.set_facecolor(face_colors)
+            ax.add_collection3d(poly3d)
+            
+        all_vertices = np.vstack(steps)
+        min_limits = all_vertices.min(axis=0)
+        max_limits = all_vertices.max(axis=0)
+        max_range = (max_limits - min_limits).max()
+        mid_x = (max_limits[0] + min_limits[0]) * 0.5
+        mid_y = (max_limits[1] + min_limits[1]) * 0.5
+        
+        ax.set_xlim(mid_x - max_range/2, mid_x + max_range/2)
+        ax.set_ylim(mid_y - max_range/2, mid_y + max_range/2)
+        ax.set_zlim(0, max_limits[2] + 0.1)
+        
+        ax.set_xlabel('Longueur X (m)', labelpad=10, fontsize=9, color='#0369A1')
+        ax.set_ylabel('Largeur Y (m)', labelpad=10, fontsize=9, color='#0369A1')
+        ax.set_zlabel('Hauteur Z (m)', labelpad=10, fontsize=9, color='#0369A1')
+        ax.tick_params(colors='#0284C7', labelsize=8)
+        
+        # Adaptation fine de la camera
+        if stair_type == "droit":
+            ax.view_init(elev=15, azim=-160)
+        elif stair_type == "tournant_gauche":
+            ax.view_init(elev=25, azim=-135)
+        elif stair_type == "tournant_droite":
+            # Symetrie de camera exacte (-225 degres) pour reveler l'autre versant sans angles morts
+            ax.view_init(elev=25, azim=-225)
+        else:
+            ax.view_init(elev=30, azim=-60)
+            
+        # Rendu 1 : PNG (pour affichage dynamique direct)
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=140, bbox_inches='tight', transparent=True)
+        buf.seek(0)
+        img_b64 = base64.b64encode(buf.read()).decode('utf-8')
+        document.getElementById("staircase_img").src = "data:image/png;base64," + img_b64
+        
+        # Rendu 2 : SVG vectoriel d'exportation
+        buf_svg = io.BytesIO()
+        plt.savefig(buf_svg, format='svg', bbox_inches='tight', transparent=True)
+        plt.close(fig)
+        buf_svg.seek(0)
+        svg_data = buf_svg.read().decode('utf-8')
+        
+        # Creation du Blob et liaison avec le bouton de telechargement
+        blob = Blob.new([svg_data], { "type": "image/svg+xml" })
+        url = window.URL.createObjectURL(blob)
+        
+        download_btn = document.getElementById("download_btn_svg")
+        download_btn.href = url
+        download_btn.download = f"schema_escalier_{stair_type}.svg"
+        download_btn.classList.remove("hidden")
+        
+        # EVALUATION ERGONOMIQUE
+        h_cm = step_height * 100.0
+        g_cm = step_tread * 100.0
+        
+        blondel = 2 * h_cm + g_cm
+        document.getElementById("diag_blondel_val").innerText = f"{blondel:.1f} cm"
+        
+        if 60 <= blondel <= 64:
+            b_class = "bg-emerald-50 text-emerald-800 border-emerald-200"
+            b_status = "Confort optimal (Ideal)"
+        elif 58 <= blondel <= 66:
+            b_class = "bg-amber-50 text-amber-800 border-amber-200"
+            b_status = "Satisfaisant"
+        else:
+            b_class = "bg-rose-50 text-rose-800 border-rose-200"
+            b_status = "Dimensions hors normes (Inconfortable)"
+            
+        b_badge = document.getElementById("diag_blondel_badge")
+        b_badge.className = f"px-2.5 py-1 text-xs font-semibold rounded-full border {b_class}"
+        b_badge.innerText = b_status
+        
+        angle_deg = np.degrees(np.arctan(step_height / step_tread))
+        document.getElementById("diag_angle_val").innerText = f"{angle_deg:.1f}°"
+        
+        if 28 <= angle_deg <= 37:
+            a_class = "bg-emerald-50 text-emerald-800 border-emerald-200"
+            a_status = "Ideal (Standard d'habitation)"
+        elif 20 <= angle_deg < 28:
+            a_class = "bg-sky-50 text-sky-850 border-sky-200"
+            a_status = "Pente douce (Usage monumental / exterieur)"
+        elif 37 < angle_deg <= 42:
+            a_class = "bg-amber-50 text-amber-850 border-amber-200"
+            a_status = "Legerement raide (Escalier secondaire)"
+        else:
+            a_class = "bg-rose-50 text-rose-800 border-rose-200"
+            a_status = "Tres raide (Echelle de meunier)"
+            
+        a_badge = document.getElementById("diag_angle_badge")
+        a_badge.className = f"px-2.5 py-1 text-xs font-semibold rounded-full border {a_class}"
+        a_badge.innerText = a_status
+        
+        total_h = num_steps * step_height
+        document.getElementById("tech_height").innerText = f"{total_h:.2f} m"
+        
+        if stair_type == "droit":
+            total_l = num_steps * step_tread
+            footprint_text = f"Rectangle de {total_l:.2f} m (Longueur) x {max(width_start, width_end):.2f} m (Largeur)"
+        elif stair_type in ["tournant_gauche", "tournant_droite"]:
+            K = num_steps // 2
+            w_K = (width_start + (width_end - width_start) * (K / (num_steps - 1))) if num_steps > 1 else width_start
+            dim_x = K * step_tread + w_K
+            dim_y = w_K/2 + (num_steps - K - 1) * step_tread
+            side = "Gauche" if stair_type == "tournant_gauche" else "Droite"
+            footprint_text = f"Emprise en L ({side}) : {dim_x:.2f} m (Longueur X) x {dim_y:.2f} m (Profondeur Y)"
+        else:
+            r_in = 0.08
+            max_w = max(width_start, width_end)
+            diameter = 2 * (r_in + max_w)
+            footprint_text = f"Cylindre de diam&egrave;tre : {diameter:.2f} m ({diameter*100:.0f} cm)"
+            
+        document.getElementById("tech_footprint").innerText = footprint_text
+        
+    except ValueError as ve:
+        error_banner.innerText = f"Erreur de saisie : {str(ve)}"
+        error_banner.classList.remove("hidden")
+    except Exception as e:
+        error_banner.innerText = f"Erreur de calcul : {str(e)}"
+        error_banner.classList.remove("hidden")
+        
+    finally:
+        spinner.classList.add("hidden")
+
+def update_stairs(event=None):
+    """Point d'entree synchrone qui planifie la tache asynchrone."""
+    asyncio.ensure_future(update_stairs_async())
+
+# Demarrage initial de l'application
+asyncio.ensure_future(update_stairs_async())
+    </script>
+</body>
+</html>
